@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"wc/handlers"
 	"flag"
+	"os"
 )
 
 
@@ -13,16 +14,37 @@ func main() {
 	enableWords := flag.Bool("w", false, "Get the number of words in a file.")
 	enableChars := flag.Bool("m", false, "Get the number of characters in a file.")
 	flag.Parse()
-	handlers.DummyOne()
+
+	screenMsg := "Number of %s in the file %s is %d.\n"
+	file := os.Args[len(os.Args)-1]
 	
-	mapInput := map[bool]interface{} {
-		*enableBytes: handlers.GetBytes,
-		*enableLines: handlers.GetLines,
-		*enableWords: handlers.GetWords, 
-		*enableChars: handlers.GetChars,
+	_, err := os.Stat(file)
+
+	if os.IsNotExist(err) {
+		fmt.Printf("File does not exist.")
+		panic(1)
 	}
 
-	for key, value := range mapInput {
-		fmt.Printf("Key -> %v, Value -> %v", key, value)
+
+	if *enableBytes {
+		bytes, _ := handlers.GetBytes(file)
+		fmt.Printf(screenMsg, "bytes", file, bytes) 
 	}
-}
+
+	if *enableLines {
+		lines, _ := handlers.GetLines(file)
+		fmt.Printf(screenMsg, "lines", file, lines)
+	}
+
+	if *enableWords {
+		words, _ := handlers.GetWords(file)
+		fmt.Printf(screenMsg, "words", file, words)
+	}
+
+	if *enableChars {
+		chars, _ := handlers. GetChars(file)
+		fmt.Printf(screenMsg, "chars", file, chars)
+	}
+}	
+
+
