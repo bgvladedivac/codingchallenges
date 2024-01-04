@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"errors"
 	"regexp"
-	"reflect"
 	"io/ioutil"
 )
 
+func DummyOne() {
 
+}
 func GetWords(fileName string) (int, error) {
 	file, err := os.Open(fileName)
 
@@ -31,7 +32,6 @@ func GetWords(fileName string) (int, error) {
 	}
 	
 	return counter, nil
-
 }
 
 func GetLines(fileName string) (int, error) {
