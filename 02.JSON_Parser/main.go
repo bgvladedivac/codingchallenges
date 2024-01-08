@@ -5,6 +5,7 @@ import (
 	"os"
 	"bufio"
 	"strings"
+	"errors"
 )
 
 func check(e error) {
@@ -25,40 +26,96 @@ func countOccurences(s []string, item string) int {
 	return occurences
 }
 
-func main() {
-	file, err := os.Open("invalid.json")	  
-	check(err)
-	
+
+// checks if the number of left curly bracket '{'
+// equals the number of right curly bracket '}'
+func checkIfCurlyBracketsAreMatching(fileName string) (bool, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		errMsg := fmt.Sprintf("Filename %s does not exist.", fileName)
+		
+		return false, errors.New(errMsg)
+	}
+
+	defer file.Close()
+
 	curleyBrackets := []string{}
+	leftCurley := "{"
+	rightCurley := "}"
 	scanner := bufio.NewScanner(file)
 	
 	for scanner.Scan() {
 		line := scanner.Text()
 		lineTokens := strings.Split(line, " ")
-		for _, lineToken := range lineTokens {
-			if lineToken == "{" {
-				curleyBrackets = append(curleyBrackets, lineToken)
+		for _ , lineToken := range lineTokens {
+			if lineToken == leftCurley {
+				curleyBrackets = append(curleyBrackets, leftCurley)
 			}
 
-			if lineToken == "}" {
-				curleyBrackets = append(curleyBrackets, lineToken)
+			if lineToken == rightCurley {
+				curleyBrackets = append(curleyBrackets, rightCurley)
 			}
 		}
 	}
+	
+	leftCurleyCounter := countOccurences(curleyBrackets, leftCurley)
+	rightCurleyCounter := countOccurences(curleyBrackets, rightCurley)
 
-	fmt.Println(curleyBrackets)
-	fmt.Println(len(curleyBrackets))
+	// consider the file to be valid json if '{' count is equal to '}'
+	return leftCurleyCounter == rightCurleyCounter, nil
 
-	leftBraacketOccurences := countOccurences(curleyBrackets, "{")
+}
 
-	rightBracketOccurences := countOccurences(curleyBrackets, "}")
 
-	fmt.Println(leftBraacketOccurences)
-	fmt.Println(rightBracketOccurences)
+// checks if each line has a double dot and a previous quote
+// similiar to ": 
+func checkIfDoubleDotAndPreviousQuoteArePresentPerLine(fileName string) (bool, error) {
+	file, err := os.Open(fileName)
 
-	if leftBraacketOccurences == rightBracketOccurences {
-		fmt.Println("This is a valid json file.")
-	} else {
-		fmt.Println("This is not a valid json file.")
+	if err != nil {
+		errMsg := fmt.Sprintf("Filename %s does not exist.", fileName)
+		return false, errors.New(errMsg)
 	}
+
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	
+	for scanner.Scan() {
+		line := scanner.Text()
+		validLine := false
+
+		for index, char := range line {
+			c := string(char)
+			if strings.Compare(c, ":") == 0 {
+				if string(line[index-1]) == "\"" {
+					validLine = true	
+				}
+			}
+		}
+
+		if !validLine  {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// declare a method to pick up all json files and store them in the slice
+
+
+
+// declare a method to squuze all empty lines in the json file.
+
+func main() {
+	fileNames := []string{"valid.json", "invalid.json", "valid-basic-keypair.json", "invalid-basic-keypair.json"}	
+	
+
+	for _, fileName := range fileNames {
+		fmt.Println("Result for file %s are as following:", fileName)
+		fmt.Println(checkIfCurlyBracketsAreMatching(fileName))
+		fmt.Println(checkIfDoubleDotAndPreviousQuoteArePresentPerLine(fileName))
+		fmt.Println()
+	}
+
 }
