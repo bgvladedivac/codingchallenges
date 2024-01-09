@@ -102,14 +102,29 @@ func checkIfDoubleDotAndPreviousQuoteArePresentPerLine(fileName string) (bool, e
 }
 
 // declare a method to pick up all json files and store them in the slice
+func GetFiles(directory string, extension string) ([]string, error) {
+	dirEntriers, err := os.ReadDir(directory)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error while reading the directory %s", directory)
+		return nil, errors.New(errMsg)
+	}
 
+	var files []string
+	
+	for _, dirEntry := range dirEntriers {
+		if !dirEntry.IsDir() && strings.HasSuffix(dirEntry.Name(), extension) {
+			files = append(files, dirEntry.Name())
+		}
+	}
+
+	return files, nil
+}
 
 
 // declare a method to squuze all empty lines in the json file.
 
 func main() {
-	fileNames := []string{"valid.json", "invalid.json", "valid-basic-keypair.json", "invalid-basic-keypair.json"}	
-	
+	fileNames, _ := GetFiles("./", ".json")
 
 	for _, fileName := range fileNames {
 		fmt.Println("Result for file %s are as following:", fileName)
@@ -117,5 +132,6 @@ func main() {
 		fmt.Println(checkIfDoubleDotAndPreviousQuoteArePresentPerLine(fileName))
 		fmt.Println()
 	}
+
 
 }
