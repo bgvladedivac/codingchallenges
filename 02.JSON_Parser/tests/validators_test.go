@@ -7,7 +7,6 @@ import (
 	"jsonparser/utils"
 	"os"
 	"testing"
-	"time"
 )
 
 const dir = "/tmp/"
@@ -92,7 +91,6 @@ func TestCurlyBracketsAreNotMatching(t *testing.T) {
 		}
 
 		_, err = file.WriteString(test.content)
-		time.Sleep(time.Second * 10)
 		if err != nil {
 			t.Errorf("Writing content to tmp file failed.")
 		}

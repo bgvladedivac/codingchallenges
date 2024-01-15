@@ -1,137 +1,73 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"bufio"
+	"fmt"
+	"jsonparser/utils"
+	"os"
 	"strings"
-	"errors"
 )
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
+type JSONDocument struct {
+	jsonLines []JSONDocumentLine
 }
 
-func countOccurences(s []string, item string) int {
-	occurences := 0
-
-	for _, value := range s {
-		if strings.Compare(value, item) == 0 {
-			occurences += 1
-		}
-	}
-
-	return occurences
+type JSONDocumentLine struct {
+	key   string
+	value any
 }
 
-
-// checks if the number of left curly bracket '{'
-// equals the number of right curly bracket '}'
-func checkIfCurlyBracketsAreMatching(fileName string) (bool, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		errMsg := fmt.Sprintf("Filename %s does not exist.", fileName)
-		
-		return false, errors.New(errMsg)
+func CreateNewJSONDocumentLine(key string, value any) *JSONDocumentLine {
+	jsDocLine := JSONDocumentLine{
+		key:   key,
+		value: value,
 	}
-
-	defer file.Close()
-
-	curleyBrackets := []string{}
-	leftCurley := "{"
-	rightCurley := "}"
-	scanner := bufio.NewScanner(file)
-	
-	for scanner.Scan() {
-		line := scanner.Text()
-		lineTokens := strings.Split(line, " ")
-		for _ , lineToken := range lineTokens {
-			if lineToken == leftCurley {
-				curleyBrackets = append(curleyBrackets, leftCurley)
-			}
-
-			if lineToken == rightCurley {
-				curleyBrackets = append(curleyBrackets, rightCurley)
-			}
-		}
-	}
-	
-	leftCurleyCounter := countOccurences(curleyBrackets, leftCurley)
-	rightCurleyCounter := countOccurences(curleyBrackets, rightCurley)
-
-	// consider the file to be valid json if '{' count is equal to '}'
-	return leftCurleyCounter == rightCurleyCounter, nil
-
+	return &jsDocLine
 }
 
-
-// checks if each line has a double dot and a previous quote
-// similiar to ": 
-func checkIfDoubleDotAndPreviousQuoteArePresentPerLine(fileName string) (bool, error) {
-	file, err := os.Open(fileName)
-
-	if err != nil {
-		errMsg := fmt.Sprintf("Filename %s does not exist.", fileName)
-		return false, errors.New(errMsg)
-	}
-
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	
-	for scanner.Scan() {
-		line := scanner.Text()
-		validLine := false
-
-		for index, char := range line {
-			c := string(char)
-			if strings.Compare(c, ":") == 0 {
-				if string(line[index-1]) == "\"" {
-					validLine = true	
-				}
-			}
-		}
-
-		if !validLine  {
-			return false, nil
-		}
-	}
-
-	return true, nil
+func (jsDocLine *JSONDocumentLine) String() string {
+	lineStr := fmt.Sprintf("I am a JSON Document Line with Content of Key -> %s, Value -> %v.\n", jsDocLine.key, jsDocLine.value)
+	return lineStr
 }
-
-// declare a method to pick up all json files and store them in the slice
-func GetFiles(directory string, extension string) ([]string, error) {
-	dirEntriers, err := os.ReadDir(directory)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error while reading the directory %s", directory)
-		return nil, errors.New(errMsg)
-	}
-
-	var files []string
-	
-	for _, dirEntry := range dirEntriers {
-		if !dirEntry.IsDir() && strings.HasSuffix(dirEntry.Name(), extension) {
-			files = append(files, dirEntry.Name())
-		}
-	}
-
-	return files, nil
-}
-
-
-// declare a method to squuze all empty lines in the json file.
 
 func main() {
-	fileNames, _ := GetFiles("./", ".json")
-
+	fileNames, _ := utils.GetFiles("./", ".json")
+	fmt.Println("Length of file names -> ", len(fileNames))
 	for _, fileName := range fileNames {
-		fmt.Println("Result for file %s are as following:", fileName)
-		fmt.Println(checkIfCurlyBracketsAreMatching(fileName))
-		fmt.Println(checkIfDoubleDotAndPreviousQuoteArePresentPerLine(fileName))
-		fmt.Println()
-	}
+		curleyBracketsMatching, err := utils.CheckIfCurlyBracketsAreMatching(fileName)
 
+		if err != nil {
+			fmt.Println("Error opening the file.")
+		}
+
+		if curleyBracketsMatching {
+			file, _ := os.Open(fileName)
+			scanner := bufio.NewScanner(file)
+
+			key := ""
+			value := ""
+			for scanner.Scan() {
+				line := scanner.Text()
+				clearLine := strings.ReplaceAll(line, " ", "")
+				splittedClearLine := strings.Split(clearLine, ":")
+				fmt.Println("\n")
+
+				for index, token := range splittedClearLine {
+					if index == 0 {
+						key = token
+					}
+
+					if index == 1 {
+						value = token
+					}
+				}
+
+			}
+
+			jsonDocLine := CreateNewJSONDocumentLine(key, value)
+			fmt.Println(jsonDocLine)
+
+		}
+	}
 
 }
